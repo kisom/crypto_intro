@@ -61,7 +61,7 @@ need to be done. However, given `ABCDABCDABCDABCD ABCDABCDABCD` an additional
 the padding. Using the previous example: 
 `ABCDABCDABCDABCD ABCDABCDABCD\x80\x00\x00\x00`.
 
-A padding function is pretty easy:
+A padding function is pretty easy:     
     def pad_data(data):
     	# return data if no padding is required
     	if len(data) % 16 == 0: 
@@ -95,4 +95,4 @@ common mode used is **cipher block chaining** or *CBC* mode. Other modes
 include *counter (CTR)*, *cipher feedback (CFB)*, and the extremely insecure
 *electronic codebook (ECB)*. CBC mode is the standard and is well-vetted, so
 I will stick to that in this tutorial. Cipher block chaining works by XORing
-the previous block of ciphertext with the current block
+the previous block of ciphertext with the current block.
