@@ -1,6 +1,8 @@
+# emacs is creative in coming up with new garbage to name backup files as
 \#*.*#
 .*.swp
 *.*~
+.#*
 .hg
 *.pyc
 
