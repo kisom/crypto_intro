@@ -5,8 +5,15 @@
 # AES block cipher examples for the article "Introduction to Cryptography
 # Using Python and PyCrypto".
 
+# PyCrypto imports
 import Crypto.Cipher.AES
+import Crypto.Random.OSRNG.posix
+import Crypto.Hash.MD5
 
+# other imports
+import time
+
+# constants
 BLOCK_SIZE = 16
 
 def pad_data(data):
@@ -31,3 +38,10 @@ def unpad_data(data):
         if data[i] == '\x80':
             break
     return data[:i]
+
+def generate_nonce():
+    rnd = Crypto.Random.OSRNG.posix.new().read(BLOCK_SIZE)
+    rnd = '%s%s' % (rnd, str(time.time()))
+    nonce = Crypto.Hash.MD5.new(data = rnd)
+    
+    return nonce.digest()
