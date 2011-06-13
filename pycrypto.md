@@ -32,7 +32,8 @@ major roles that cryptography plays:
 0. *confidentiality*: ensuring that only the intended recipients receive the
 plaintext of the message.    
 0. *data integrity*: the plaintext message arrives unaltered.     
-0. *entity authentication*: the identity of the sender is verified.    
+0. *entity authentication*: the identity of the sender is verified. An entity
+may be a person or a machine.   
 0. *message authentication*: the message is verified as having been 
 unaltered.     
 
@@ -90,7 +91,7 @@ Similarly, removing padding is also easy:
 
 I've included these functions in the example code for this tutorial. 
 
-Encryption with a block is done with one of several modes. By far the most
+Encryption with a block cipher requires selecting a block mode. By far the most
 common mode used is **cipher block chaining** or *CBC* mode. Other modes
 include *counter (CTR)*, *cipher feedback (CFB)*, and the extremely insecure
 *electronic codebook (ECB)*. CBC mode is the standard and is well-vetted, so
@@ -126,3 +127,6 @@ or higher.
 I will note here that the python `random` module is completely unsuitable for
 cryptography (as it is completely deterministic). You shouldn't use it for
 cryptographic code.
+
+Symmetric ciphers are so-named because the key is shared across any entities.
+There are three key sizes for AES: 128-bit, 192-bit, and 256-bit.
