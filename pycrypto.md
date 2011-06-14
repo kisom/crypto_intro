@@ -1,6 +1,6 @@
 Recently at work I have been doing a lot of work with the 
 [PyCrypto](https://www.dlitz.net/software/pycrypto/) libraries.
-The documentation is pretty good but there are a few areas that took me a bit
+The documentation is pretty good, but there are a few areas that took me a bit
 to figure out. In this post, I'll be writing up a quick overview of the 
 PyCrypto library and cover some general things to know when writing 
 cryptographic code in general. I'll go over symmetric, public-key, hybrid,
@@ -23,7 +23,7 @@ ciphertext.
 of both encryption and decryption.    
 * *hash*: a set of cryptographic transformations that take a large input and
 transform it to a unique (typically fixed-size) output. For hashes to be
-cryptographically secure, collisions should be practically nonexistent and it
+cryptographically secure, collisions should be practically nonexistent. It
 should be practically impossible to determine the input from the output.
 
 Cryptography is an often misunderstood component of information security, so
@@ -37,7 +37,7 @@ may be a person or a machine.
 0. *message authentication*: the message is verified as having been 
 unaltered.     
 Note that cryptography is used to obscure the contents of a message and verify
-its contents and source. It will not hide the fact that two entities are 
+its contents and source. It will **not** hide the fact that two entities are 
 communicating.
 
 There are two basic types of ciphers: symmetric and public-key ciphers. A 
@@ -62,10 +62,10 @@ given an input of `ABCDABCDABCDABCD ABCDABCDABCDABCD` no padding would
 need to be done. However, given `ABCDABCDABCDABCD ABCDABCDABCD` an additional
 4 bytes of padding would need to be added. A common padding scheme is to use
 0x80 as the first byte of padding, with 0x00 bytes filling out the rest of 
-the padding. Using the previous example: 
+the padding. With padding, the previous example would look like: 
 `ABCDABCDABCDABCD ABCDABCDABCD\x80\x00\x00\x00`.
 
-A padding function is pretty easy:   
+Writing a padding function is pretty easy:   
 
     def pad_data(data):
     	# return data if no padding is required
@@ -113,7 +113,7 @@ enough that it cannot be recovered; one manner of doing this is to combine a
 standard UNIX timestamp with a block-size group of random data, using a standard
 hashing algorithm such as MD5 to make it unique. 
 
-One of the most critical components to encryption is properly generate 
+One of the most critical components to encryption is properly generating 
 random data. Fortunately, most of this is handled by the PyCrypto library's
 Crypto.Random.OSRNG module. You should know that the more entropy sources
 available (such as network traffic and disk activity), the faster the system
