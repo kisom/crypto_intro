@@ -259,4 +259,32 @@ one. For example:
     1023
     >>>
 
+The key also includes encryption and decryption methods in the class:
+    
+    >>> import publickey
+    >>> message = 'Test message...'
+    >>>  key.encrypt(message, None)
+    ('e\xd7\\t\xd2\xac\x9d\x0f!f\xfd\xe2B}\xad\x8fd#1S\x05\xc9\x95\xfd,\x0e_\xf6\xc6KQ\x88\xe0B\xf3l#tc\xbb\xe8B\tj6\x1d\xdc\x19\xf91\xb3h\xfaI\xf6\xca\x9f\xda<z\x1a\x14\xb1\xe0A\x86\xd7\xba\x9a\xdcz\xe8\xe6\xa0\x99Q;\x04B\x1c\x8dX\xbb0\x92\x8ab?\xcas\x95\xc7\x0f\xc5\xfb\x8e\xf68=_\x95cvi"v\x86\x81.\xa9\xfe\xb2xz\xabv/\xf1\xbf\x1e\xc7\x07\x01\xa8\xb4\xf6\xff\xa6',)
+
+The None that is passed into the encryption function is part of the PyCrypto
+API for those publickey ciphers requiring an additional random number function
+to be passed in. It returns a tuple containing only the encrypted message. In
+order to pass this to the decryption function, we need to pass only the 
+encrypted message as a string:
+
+     >>> ciphertext = key.encrypt(message, None)[0]
+     >>> key.decrypt(ciphertext)
+     'Test message...'
+
+While these are simple enough, we could put them into a pair of functions:
+
+     def encrypt(key, message):
+     	 ciphertext  = key.encrypt(message, None)
+	 ciphertext  = ciphertext[0]
+
+    	 return ciphertext
+
+     def decrypt(key, message):
+     	 plaintext   = key.decrypt(message)
+    	 return plaintext
 
