@@ -1,3 +1,12 @@
+A Working Introduction to Crypto with PyCrypto
+==============================================
+
+written by Kyle Isom <coder@kyleisom.net>
+-----------------------------------------
+site: https://www.github.com/kisom/crypto_intro
+
+
+
 Recently at work I have been doing a lot of work with the 
 [PyCrypto](https://www.dlitz.net/software/pycrypto/) libraries.
 The documentation is pretty good, but there are a few areas that took me a bit
@@ -229,11 +238,12 @@ Alice wants to talk to Bob, but doesn't want Eve to know the contents of the
 message. Both Alice and Bob generate a set of private keys. From those private
 keys, they both generate public keys. Let's say they post their public keys on
 their websites. Alice wants to send a private message to Bob, so she looks up
-Bob's public key from his site. The public key can be used as the key to 
-encrypt a message with PKC. The resulting ciphertext can only be decrypted 
-using Bob's private key. Alice sends Bob the resulting ciphertext, which Eve
-cannot decrypt without Bob's private key. Hopefully this is a little less 
-confusing. 
+Bob's public key from his site. (In fact, there is a way to distribute keys via
+a central site or entity; this is called a public key infrastructure (PKI). The 
+public key can be used as the key to encrypt a message with PKC. The resulting 
+ciphertext can only be decrypted using Bob's private key. Alice sends Bob the 
+resulting ciphertext, which Eve cannot decrypt without Bob's private key. 
+Hopefully this is a little less confusing. 
 
 One of the most common PKC systems is RSA (which is an acronym for the last 
 names of the designers of the algorithm). Generally, RSA keys are 1024-bit,
@@ -288,3 +298,24 @@ While these are simple enough, we could put them into a pair of functions:
      	 plaintext   = key.decrypt(message)
     	 return plaintext
 
+These two functions present a common API that will simplify encryption and
+decryption and make it a little easier to read. Assuming we still have the same
+`message` definition as before:
+
+    >>> ciphertext = publickey.encrypt(key, message)
+    >>> publickey.decrypt(key, ciphertext)
+    'Test message...'
+
+You might have noticed at this point that public key cryptography appears to
+be a lot simpler than symmetric key cryptography. The key distribution problem
+is certainly easier, especially with a proper PKI. Why would anyone choose to
+use symmetric key cryptography over public key cryptography? The answer is
+performance: if you compare the block cipher test code (if you don't have a 
+copy of this code, you can get it at the tutorial's 
+[github page](https://www.github.com/kisom/crypto_tutorial)) with the public
+key test code, you will notice that the block cipher code is orders of magnitude
+faster - and it generates far more keys than the public key code. There is a 
+solution to this problem: hybrid cryptosystems.
+
+Hybrid cryptosystems use public key cryptography to establish a symmetric 
+session key.

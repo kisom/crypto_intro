@@ -12,6 +12,7 @@ import Crypto.Hash.MD5
 import Crypto.Hash.SHA256
 
 # other imports
+import base64
 import time
 
 # constants
@@ -95,15 +96,30 @@ def generate_aes_key():
 
     return rnd
     
-def encrypt(key, iv, data):
+def encrypt(key, data, iv, armour = False):
     aes     = Crypto.Cipher.AES.new(key, mode, iv)
     data    = pad_data(data)
+    ct      = aes.encrypt(data)         # ciphertext
+    ct      = iv + ct                   # pack the initialisation vector in
+    
+    # ascii-armouring
+    if armour:
+        ct = '\x41' + base64.encodestring(ct)
+    else:
+        ct = '\x00' + ct
 
-    return aes.encrypt(data)
+    return ct
 
-def decrypt(key, iv, data):
+def decrypt(key, data, iv = None):
+    # remove ascii-armouring if present
+    if data[0] == '\x00':
+        data = data[1:]
+    elif data[0] == '\x41':
+        data = base64.decodestring(data[1:])
+
+    iv      = data[:16]
+    data    = data[16:]
     aes     = Crypto.Cipher.AES.new(key, mode, iv)
     data    = aes.decrypt(data)
-
     return unpad_data(data)
 

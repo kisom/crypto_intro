@@ -34,6 +34,15 @@ def test_nonce():
         assert( len(nonce) == 16 )      # nonce needs to be block-sized
         nonces.append(nonce)            
 
+def test_keygen():
+    print '\t[+] generating 1024 test keys... ',
+    for i in range(1024):
+        key = block.generate_aes_key()
+        assert( len(key) == 32 )
+
+    print 'OK!'
+
+
 # test verifying that a message encrypted with a passphrase can be 
 # successfully decrypted without distortion to the original message
 def test_passphrase():
@@ -64,11 +73,28 @@ def test_random_key():
     assert( len(key) == 32 )
     
     iv          = block.generate_nonce()
-    ct          = block.encrypt( key, iv, message )
-    pt          = block.decrypt( key, iv, ct )
+    ct          = block.encrypt( key, message, iv )
+    pt          = block.decrypt( key, ct, iv )
 
     assert( pt == message )
+    print '\t[+] successfully decrypted!'
 
+def test_armoured():
+    key         = block.generate_aes_key()
+    message     = 'This is a sample message. 0123456789ABCDEF'
+
+    print '\t[+] test message: \'%s\'' % message
+    assert( len(key) == 32 )
+
+    iv          = block.generate_nonce()
+    ct          = block.encrypt( key, message, iv, armour = True )
+    print_ct    = ct.replace('\n', '\n\t').rstrip()
+    print '\t[+] ciphertext: \n\t%s' % print_ct
+
+    pt          = block.decrypt( key, ct )
+    assert( pt == message )
+
+    print '\t[+] successfully decrypted!'
 
 # the program should be run with no arguments from the command line
 # it will run through all the tests.
@@ -87,8 +113,16 @@ if __name__ == '__main__':
     test_passphrase()
     print '[+] successfully passed passphrase encryption test!'
 
+    print '[+] begin key generation test'
+    test_keygen()
+    print '[+] successfully passed key generation test!'
+
     print '[+] begin standard encryption test'
     test_random_key()
     print '[+] successfully passed standard encryption test!'
+
+    print '[+] testing ASCII armour encryption test'
+    test_armoured()
+    print '[+] successfully passed ASCII armour encryption test!'
 
     print '[+] successfully passed all tests!'

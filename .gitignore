@@ -6,3 +6,4 @@
 .hg
 *.pyc
 .hgignore
+.hg

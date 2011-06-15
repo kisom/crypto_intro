@@ -7,6 +7,7 @@
 
 
 import publickey
+import os
 import sys         
 
 
@@ -55,6 +56,41 @@ def test_crypto():
     print '\t[+] decryped ciphertext as \'%s\'' % pt
     assert( pt == message )
 
+
+def test_key_export():
+    print '\t[+] generating 2048-bit RSA test key... ',
+    flush()
+    masterkey   = publickey.generate_key( 2048 )
+    print 'OK!'
+    
+    print '[+] exporting keypair to disk...'
+    publickey.export_keypair( 'publickey_tests', masterkey )
+
+    print '\t[+] attempting to reload keypair from disk... ',
+    pubkey      = publickey.load_key( 'publickey_tests.pub' )
+    prvkey      = publickey.load_key( 'publickey_tests.prv' )
+
+    assert( prvkey.has_private() )
+    assert( not pubkey.has_private() )
+
+    print 'OK!'
+
+    assert( pubkey == prvkey.publickey() )
+    print '\t[+] cleaning up... ',
+
+    try:
+        os.unlink('publickey_tests.pub')
+        os.unlink('publickey_tests.prv')
+    except OSError as e:
+        print 'FAILED!'
+        print '\t[!] failed cleanup: %s' % e
+
+        # failure to cleanup isn't a failure of the crypto library
+        return
+    else:
+        print 'OK!'
+        print '\t[+] cleanup successful!'
+
 if __name__ == '__main__':
     print '[+] beginning RSA tests'
 
@@ -66,4 +102,8 @@ if __name__ == '__main__':
     test_crypto()
     print '[+] successfully completed RSA tests'
 
+    print '[+] testing key exports and imports'
+    test_key_export()
+    print '[+] successfully completed export / import test!'
 
+    print '[+] successfully passed all tests!'
