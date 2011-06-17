@@ -6,6 +6,7 @@
 \title{A Working Introduction to Crypto with PyCrypto}
 \author{Kyle Isom\\coder@kyleisom.net\\https://www.github.com/kisom/crypto\_intro}
 
+
 \begin{document}
 
 \maketitle
@@ -17,14 +18,16 @@ The documentation is pretty good, but there are a few areas that took me a bit
 to figure out. In this post, I'll be writing up a quick overview of the 
 PyCrypto library and cover some general things to know when writing 
 cryptographic code in general. I'll go over symmetric, public-key, hybrid,
-and message authentication codes. For a more complete introduction to
+and message authentication codes. Keep in mind this is a quick introduction and
+a lot of gross simplifications are made. For a more complete introduction to
 cryptography, take a look at the references at the end of this article. This
 article is just an appetite-whetter - if you have a real need for information
 security you should hire an expert. Real data security goes beyond this quick
 introduction (you wouldn't trust the design and engineering of a bridge to
-a student with a quick introduction to civil engineering, would you?)
+a student with a quick introduction to civil engineering, would you?) 
 
 Some quick terminology: for those unfamiliar, I introduce the following terms:
+\indent
 \begin{description}
   \item[plaintext]: the original message
   \item[ciphertext]: the message after cryptographic transformations are applied 
@@ -559,5 +562,130 @@ session key. This is a subject beyond the realm of a quick tutorial - again,
 consult with the people who do this on a regular basis.
 
 \section{Digital Signatures}
-START WRITING SOMETHING
+In all of the previous examples, we assumed that the identity of the sender
+wasn't a question. For a symmetric key, that's less of a stretch - there's no 
+differentiation between owners. Public keys, however, are supposed to be
+associated with an entity. How can we prove the identity of the user? Without
+delving into too much into social sciences and trust metrics and a huge
+philosophical argument, let's look at the basics of signatures. 
+
+A signature works similarly to encryption, but it in reverse, and it is slightly
+different: a hash of the message is 'encrypted' by the private key to the 
+public key. The public key is used to 'decrypt' this ciphertext. Contrast this 
+to actual public key encryption: the entire message is encrypted to the private 
+key by the public key, and the private key is used to decrypt the ciphertext. 
+With signatures, the 'encrypted' hash of the message is called the signature,
+and the act of 'encryption' is termed 'signing'. Similarly, the 'decryption' 
+is known as verification or verifying the signature.
+
+PyCrypto's PublicKey implementations already come with signatures and 
+verification methods for keys using sign() and verify(). The signature
+is a long in a tuple:
+\begin{verbatim}
+    >>> key.sign( d, None )
+    (1738423518152671545669571445860037944518162197656333123466248015147955424248
+876723731383711018550231967374810686606623315483033485630977014574359346192927942
+623807461783144628656796225504478196458051789241311033020911767301220653148276004
+0551357526383627059382081878791040169815009051016949220178044764130908L,)
+\end{verbatim}
+
+We can write our own functions to wrap around these two functions and perform 
+ASCII-armouring if desired. Our signature function should take a key and a 
+message (and optionally a flag to ASCII armour the signature), and sign a 
+digest of the message:
+\begin{verbatim}
+    def sign(key, message, armour = True):
+        if not key.can_sign(): 
+            return None
+
+        digest      = Crypto.Hash.SHA256.new(message).digest()
+        signature   = key.sign( digest, None )[0]
+
+        if armour:
+            sig     = base64.encodestring( str(signature) )
+        else:
+            sig     = str( signature )
+    
+        return sig.strip()
+\end{verbatim}
+
+The signature is converted to a string to make it easier to pack it into 
+structures and also to give us consistent input to the verify() function.
+
+Verifying the signature requires that we determine if the signature is ASCII-
+armoured or not, then comparing a digest of the message to the signature:
+\begin{verbatim}
+    def verify(key, message, signature):
+        try:
+            sig     = long( signature )
+        except ValueError as e:
+            sig     = long( base64.decodestring( signature.rstrip('\n') ), )
+
+        digest      = Crypto.Hash.SHA256.new(message).digest()
+        return key.verify( digest, (sig, ) )
+\end{verbatim}
+
+The sign() function returns a signature and the verify() function returns a 
+boolean. Now, Alice can sign her message to Bob, and Bob knows the key belongs
+to Alice. She sends Bob the signature and the encrypted message. Bob then makes
+sure Alice's key properly verifies the signature to the encrypted message.
+
+\section{Key Exchange}
+So how does Bob know the key actually belongs to Alice? There are two main
+schools of thought regarding the authentication of key ownership: centralised
+and decentralised. TLS/SSL follow the centralised school: a root 
+certificate\footnote{A certificate is a public key encoded with X.509 and which
+can have additional informational attributes attached, such as organisation
+name and country.} authority (CA) signs intermediary CA keys, which then sign
+user keys. For example, if Bob runs Foo Widgets, LLC, he can generate an SSL
+keypair. From this, he generates a certificate signing request, and sends this
+to the CA. The CA, usually after taking some money and ostensibly actually
+verifying Bob's identity\footnote{The extent to which this actually happens 
+varies widely based on the different CAs.}, then signs Bob's certificate. Bob
+sets up his webserver to use his SSL certificate for all secure traffic, and
+Alice sees that the CA did in fact sign his certificate. This relies on trusted
+central authorities, like VeriSign\footnote{There is some question as to whether
+VeriSign can actually be trusted, but that is another discussion for another
+day...} Alice's web browser would ship with a keystore of select trusted CA
+public keys (like VeriSigns) that she could use to verify signatures on the
+certificates from various sites. This system is called a public key 
+infrastructure. 
+
+The other school of thought is followed by PGP (and GnuPG) - the 
+decentralised model. In PGP, this is manifested as the Web of 
+Trust\footnote{http://www.rubin.ch/pgp/weboftrust.en.html}. 
+For example, if Carol now wants to talk to Bob and gives Bob her public key,
+Bob can check to see if Carol's key has been signed by anyone else. We'll also
+say that Bob knows for a fact that Alice's key belongs to Alice, and he trusts
+her\footnote{It is quite often important to distinguish between 
+\textit{I know this key belongs to that user} and \textit{I trust that user}. 
+This is especially important with key signatures - if Bob cannot trust Alice to
+properly check identities, she might sign a key for an identity she hasn't
+checked.}, and that Alice has signed Carol's key. Bob sees Alice's signature on
+Carol's key and then can be reasonably sure that Carol is who she says it was.
+If we repeat the process with Dave, whose key was signed by Carol (whose key
+was signed by Alice), Bob might be able to be more certain that the key belongs
+to Dave, but maybe he doesn't really trust Carol to properly verify identities.
+In PGP, Bob can mark keys as having various trust levels, and from this a web
+of trust emerges: a picture of how well you can trust that a given key belongs
+to a given user.
+
+The key distribution problem is not a quick and easy problem to solve; a lot of
+very smart people have spent a lot of time coming up with solutions to the
+problem. There are key exchange protocols (such as the Diffie-Hellman key
+exchange\footnote{http://is.gd/Tr0zLP}
+and IKE\footnote{https://secure.wikimedia.org/wikipedia/en/wiki/Internet\_Key\_Exchange} 
+(which uses Diffie-Hellman) that provide alternatives to the web of trust and
+public key infrastructures.
+
+\section{References}
+\begin{itemize}
+  \item A. J. Menezes, P. C. van Oorschot, and S. A. Vanstone. \textit{The Handbook of Applied Cryptography}, CRC Press, 5th printing, October 1996.
+
+  \item B. Schneier. \textit{Applied Cryptography, Second Edition}, John Wiley and Sons, 1996.
+
+  \item PyCrypto API Documentation. https://www.dlitz.net/software/pycrypto/apidoc/
+
+\end{itemize}
+
 \end{document}
