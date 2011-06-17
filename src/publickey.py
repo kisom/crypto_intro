@@ -5,6 +5,7 @@
 # example RSA public key cryptography code
 
 import Crypto.PublicKey.RSA
+import Crypto.Hash.SHA256
 import Crypto.Random.OSRNG.posix
 
 import base64
@@ -80,3 +81,26 @@ def decrypt(key, message):
 
     plaintext   = key.decrypt( message )
     return plaintext
+
+def sign(key, message, armour = True):
+    if not key.can_sign(): 
+        return None
+    digest      = Crypto.Hash.SHA256.new(message).digest()
+    signature   = key.sign( digest, None )[0]
+
+    if armour:
+        sig     = base64.encodestring( str(signature) )
+    else:
+        sig     = str( signature )
+    
+    return sig.strip()
+
+def verify(key, message, signature):
+    try:
+        sig     = long( signature )
+    except ValueError as e:
+        sig     = long( base64.decodestring( signature.rstrip('\n') ), )
+
+    digest      = Crypto.Hash.SHA256.new(message).digest()
+    return key.verify( digest, (sig, ) )
+
