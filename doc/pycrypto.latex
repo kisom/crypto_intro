@@ -29,7 +29,7 @@ Some quick terminology: for those unfamiliar, I introduce the following terms:
   \item[plaintext]: the original message
   \item[ciphertext]: the message after cryptographic transformations are applied 
 to obscure the original message.
-  \item[encrypt]: producting ciphertext by applying cryptographic transformations
+  \item[encrypt]: producing ciphertext by applying cryptographic transformations
 to plaintext.
   \item[decrypt]: producing plaintext by applying cryptographic transformations to
 ciphertext.
@@ -519,11 +519,8 @@ does something similar:
 
 At this point, Bob can't be sure that the message came from Alice but he can 
 read the message. We'll cover entity authentication in a later section, but
-first, I'm sure you have some questions about when to use symmetric v.
-public key cryptography...
+first, there's something else I'd to point out:
 
-
-\section{Hybrid Cryptosystems}
 You might have noticed at this point that public key cryptography appears to
 be a lot simpler than symmetric key cryptography. The key distribution problem
 is certainly easier, especially with a proper PKI. Why would anyone choose to
@@ -539,6 +536,28 @@ Hybrid cryptosystems use public key cryptography to establish a symmetric
 session key. Both \textbf{TLS}\footnote{https://secure.wikimedia.org/wikipedia/en/wiki/Transport\_Layer\_Security} 
 (Transport Layer Security), and its predecessor \textbf{SSL} (Secure Sockets 
 Layer), most often used to secure HTTP transactions, use a hybrid cryptosystem
-to speed up establishing a secure session.
+to speed up establishing a secure session. PGP (and hence GnuPG) also uses
+hybrid crypto.
 
+Let's say Alice and Bob wish to use hybrid crypto; if Alice initiates the 
+session, she should be the one to generate the session key. For example,
+\begin{verbatim}
+     >>> import block, publickey
+     >>> session_key = block.generate_aes_key()
+     >>> alice_key   = publickey.load_key('keys/alice.prv')
+     >>> bob_key     = publickey.load_key('keys/bob.pub')
+     >>> encrypted_session_key = encrypt( bob_key, session_key )
+\end{verbatim}
+
+At this point, Alice should send Bob the \verb|encrypted_session_key|; she 
+should retain a copy as well. They can then use this key to communicate using
+the much-faster AES256.
+
+In communicating, it might be wise to create a message format that packs in 
+the session key into a header, and encrypts the rest of the body with the
+session key. This is a subject beyond the realm of a quick tutorial - again,
+consult with the people who do this on a regular basis.
+
+\section{Digital Signatures}
+START WRITING SOMETHING
 \end{document}
