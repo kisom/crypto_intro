@@ -10,7 +10,7 @@ unfamiliar with cryptography. It uses the
 library.
 
 The tutorial is in the doc/ folder, where there is a LaTeX source file and a
-Makefile to build the PDF and (eventually the markdown file).
+Makefile to build the PDF and (eventually the markdown file). I've 
 
 It includes a library of sample code to illustrate use of the PyCrypto
 library as well as a tutorial. The sample code is purposefully simple to
@@ -27,9 +27,9 @@ Included source files (in src/):
 
     tests.txt:          example validated test code output
 
-Contributors:    
+Contributors:     
 * [zenmower](https://github.com/clarke187) provided grammar, spelling, and 
-readability critiques.
+readability critiques.   
 * [Kim Lidström](https://github.com/dxtr) provided spelling critiques.
 
 
