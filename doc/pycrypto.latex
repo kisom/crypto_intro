@@ -1,4 +1,4 @@
-\documentclass[letterpaper,9pt]{article}
+\documentclass[letterpaper,10pt]{article}
 \usepackage{fullpage}
 
 
@@ -215,6 +215,22 @@ PBKDF2\footnote{https://en.wikipedia.org/wiki/Pbkdf2}. Other options include
 bcrypt\footnote{https://en.wikipedia.org/wiki/Bcrypt} and 
 scrypt\footnote{https://en.wikipedia.org/wiki/Scrypt}. For symmetric ciphers,
 it is better to use a completely randomly generated password.
+
+The \verb|pbkdf2| package\footnote{http://pypi.python.org/pypi/pbkdf2/1.3}
+in PyPI is a Python implementation of PBKDF2. The example from the packages'
+webpage\footnote{https://www.dlitz.net/software/python-pbkdf2/}
+is very clear:
+
+\begin{verbatim}
+    from PBKDF2 import PBKDF2
+        from Crypto.Cipher import AES
+        import os
+    
+        salt = os.urandom(8)    # 64-bit salt
+        key = PBKDF2("This passphrase is a secret.", salt).read(32) # 256-bit key
+        iv = os.urandom(16)     # 128-bit IV
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+\end{verbatim}
 
 Unless you are you doing interactive encryption passphrase encryption won't be
 terribly useful. Instead, we just need to generate 32 random bytes (and make

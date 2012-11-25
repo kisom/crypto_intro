@@ -5,7 +5,7 @@ all: pdf view
 
 pdf: pycrypto.pdf
 
-pycrypto.pdf:
+pycrypto.pdf: pycrypto.latex
 	$(PDFGEN) pycrypto.latex
 
 view: pycrypto.pdf
