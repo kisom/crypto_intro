@@ -210,6 +210,12 @@ We could include this a set of AES encryption and decryption functions:
 Notice how the data is padded before being encrypted and unpadded after 
 decryption - the decryption process will not remove the padding on its own.
 
+Of course, storing the password is another matter entirely; I recommend
+PBKDF2\footnote{https://en.wikipedia.org/wiki/Pbkdf2}. Other options include
+bcrypt\footnote{https://en.wikipedia.org/wiki/Bcrypt} and 
+scrypt\footnote{https://en.wikipedia.org/wiki/Scrypt}. For symmetric ciphers,
+it is better to use a completely randomly generated password.
+
 Unless you are you doing interactive encryption passphrase encryption won't be
 terribly useful. Instead, we just need to generate 32 random bytes (and make
 sure we keep track of it) and use that as the key:
