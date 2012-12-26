@@ -1,15 +1,17 @@
 PDFGEN := pdflatex
 VIEWER := evince
+TARGET := pycrypto
 
 all: pdf view
 
-pdf: pycrypto.pdf
+pdf: $(TARGET).pdf
 
-pycrypto.pdf: pycrypto.latex
-	$(PDFGEN) pycrypto.latex
+$(TARGET).pdf: $(TARGET).tex
+	$(PDFGEN) $?
+	$(PDFGEN) $?
 
-view: pycrypto.pdf
-	$(VIEWER) pycrypto.pdf
+view: $(TARGET).pdf
+	$(VIEWER) $(TARGET).pdf
 
 clean:
 	rm -rf *.log *.aux *.*\~
