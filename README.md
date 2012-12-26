@@ -31,6 +31,6 @@ Contributors:
 * [zenmower](https://github.com/clarke187) provided grammar, spelling, and 
 readability critiques.   
 * [Kim Lidström](https://github.com/dxtr) provided spelling critiques.
-
+* [Erik Musick](http://erikmusick.com/) provided grammar and spelling critiques.
 
 
