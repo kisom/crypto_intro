@@ -3,6 +3,11 @@ Introduction to Cryptography with PyCrypto
 
 author: kyle isom <coder@kyleisom.net>
 
+Read online:
+* [PDF](https://github.com/kisom/crypto_intro/blob/master/doc/pycrypto.pdf)
+* [Github page](http://kisom.github.com/crypto_intro)
+* [Blog page (octpress)](http://www.kyleisom.net/blog/2011/06/17/intro-to-crypto/)
+
 This is the repository for an intro to crypto using PyCrypto. It is aimed
 at introducing basic cryptography topics to programmers who are 
 unfamiliar with cryptography. It uses the 
@@ -17,6 +22,7 @@ library as well as a tutorial. The sample code is purposefully simple to
 illustrate clearly how to use the software.
 
 Included source files (in src/):
+
     block.py:           block cipher example code
     block_crypt.py:     example code for using the block cipher examples
     block_tests.py:     tests for the block cipher code
@@ -31,6 +37,6 @@ Contributors:
 * [zenmower](https://github.com/clarke187) provided grammar, spelling, and 
 readability critiques.   
 * [Kim Lidström](https://github.com/dxtr) provided spelling critiques.
-
+* [Erik Musick](http://erikmusick.com/) provided grammar and spelling critiques.
 
 
