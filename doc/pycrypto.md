@@ -264,7 +264,8 @@ We can use this key directly in the AES transformations:
 That should cover the basics of block cipher encryption. We’ve gone over
 key generation, padding, and encryption / decryption. AES-256 isn’t the
 only block cipher provided by the PyCrypto package; however, it is the
-standard and well-vetted.
+standard and well-vetted. Note that symmetric encryption isn't enough,
+you also need to append an HMAC (using PyCrypto's HMAC module).
 
 ASCII-Armouring
 ===============
@@ -586,6 +587,10 @@ example,
 At this point, Alice should send Bob the `encrypted_session_key`; she
 should retain a copy as well. They can then use this key to communicate
 using the much-faster AES256.
+
+In practice, using plain RSA isn't secure. You also need to use a proper
+padding scheme. The PyCrypto package provides the RSA-OAEP module that
+uses the recommended OAEP padding scheme.
 
 In communicating, it might be wise to create a message format that packs
 in the session key into a header, and encrypts the rest of the body with

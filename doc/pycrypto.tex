@@ -262,6 +262,9 @@ generation, padding, and encryption / decryption. AES-256 isn't the only
 block cipher provided by the PyCrypto package; however, it is the standard
 and well-vetted. 
 
+In practice, you should append an HMAC to the ciphertext, and make sure this
+validates on decryption.
+
 \section{ASCII-Armouring}
 I'm going to take a quick detour and talk about ASCII armouring. If you've 
 played with the crypto functions above, you'll notice they produce an annoying
@@ -584,6 +587,10 @@ In communicating, it might be wise to create a message format that packs in
 the session key into a header, and encrypts the rest of the body with the
 session key. This is a subject beyond the realm of a quick tutorial - again,
 consult with the people who do this on a regular basis.
+
+In practice, using plain RSA is dangerous, and should be combined with a
+suitable padding scheme: it's recommended to use the OAEP scheme. PyCrypto
+provides the `Cipher.PKCS1_OAEP` module that you should use.
 
 \section{Digital Signatures}
 In all of the previous examples, we assumed that the identity of the sender
