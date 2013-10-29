@@ -1,125 +1,99 @@
-# -*- coding: utf-8 -*-
-# file: block.py
-# author: kyle isom <coder@kyleisom.net>
-#
-# AES-256 block cipher examples for the article "Introduction to 
-# Cryptography Using Python and PyCrypto".
+"""
+Block cipher encryption example code using Python.
+"""
 
-# PyCrypto imports
-import Crypto.Cipher.AES
-import Crypto.Random.OSRNG.posix
-import Crypto.Hash.MD5
-import Crypto.Hash.SHA256
+import streql
+import struct
+import Crypto.Cipher.AES as AES
+import Crypto.Random.OSRNG.posix as RNG
+import Crypto.Hash.HMAC as HMAC
+import Crypto.Hash.SHA384 as SHA384
 
-# other imports
-import base64
-import time
 
-# constants
-BLOCK_SIZE  = 16
-KEY_SIZE    = 32
-mode        = Crypto.Cipher.AES.MODE_CBC
+__AES_KEYLEN = 32
+__TAG_KEYLEN = 48
+__TAG_LEN = 48
+KEYSIZE = __AES_KEYLEN + __TAG_KEYLEN
 
 
 def pad_data(data):
-    # subtract one byte that should be the 0x80
-    # if 0 bytes of padding are required, it means only
-    # a single \x80 is required.
+    """Pad data for use with CBC mode."""
+    padding_required = AES.block_size
+    padding_required -= len(data) % AES.block_size
+    if padding_required == 0:
+        padding_required = AES.block_size
+    padding = struct.pack('B', (0x80))
+    padding += struct.pack('B' * (padding_required - 1),
+                           *([0] * (padding_required - 1)))
+    return data + padding
 
-    if len(data) % BLOCK_SIZE == 0: 
-        return data
-    padding_required = (BLOCK_SIZE - 1) - (len(data) % BLOCK_SIZE)
-
-    data = '%s\x80' % data
-    data = '%s%s' % (data, '\x00' * padding_required)
-
-    return data
 
 def unpad_data(data):
-    if not data: 
+    """Strip padding from input."""
+    if not data:
         return data
-
-    data = data.rstrip('\x00')
+    data = data.strip('\x00')
     if data[-1] == '\x80':
         return data[:-1]
-    else:
-        return data
+    raise Exception("Invalid padding.")
+
 
 def generate_nonce():
-    # use a POSIX RNG
-    # if you are on a windows system you will probably need OSRNG.nt
-    # you will also need to change the import at the beginning of the file.
-    rnd = Crypto.Random.OSRNG.posix.new().read(BLOCK_SIZE)
-    rnd = '%s%s' % (rnd, str(time.time()))
-    nonce = Crypto.Hash.MD5.new(data = rnd)
-    
-    return nonce.digest()
+    """Return a nonce suitable for use as an IV."""
+    return RNG.new().read(AES.block_size)
 
-# generate an AES-256 key from a passphrase
-def passphrase(password, readable = False):
+
+def generate_key():
+    """Generate a new random AES key."""
+    return RNG.new().read(KEYSIZE)
+
+
+def encrypt(data, key, armour=False):
     """
-    Converts a passphrase to a format suitable for use as an AES key.
-
-    If readable is set to True, the key is output as a hex digest. This is
-    suitable for sharing with users or printing to screen when debugging
-    code.
-
-    By default readable is set to False, in which case the value it 
-    returns is suitable for use directly as an AES-256 key.
+    Encrypt data using AES in CBC mode. The IV is prepended to the
+    ciphertext.
     """
-    key     = Crypto.Hash.SHA256.new(password)
-    
-    if readable:
-        return key.hexdigest()
-    else:
-        return key.digest()
-
-# AES-256 encryption using a passphrase
-def passphrase_encrypt(password, iv, data):
-    key     = passphrase(password)
-    data    = pad_data(data)
-    aes     = Crypto.Cipher.AES.new(key, mode, iv)
-
-    return aes.encrypt(data)
-
-# AES-256 decryption using a passphrase
-def passphrase_decrypt(password, iv, data):
-    key     = passphrase(password)
-    aes     = Crypto.Cipher.AES.new(key, mode, iv)
-    data    = aes.decrypt(data)
-
-    return unpad_data(data)
-
-# generate a random AES-256 key
-def generate_aes_key():
-    rnd     = Crypto.Random.OSRNG.posix.new().read(KEY_SIZE)
-
-    return rnd
-    
-def encrypt(key, data, iv, armour = False):
-    aes     = Crypto.Cipher.AES.new(key, mode, iv)
-    data    = pad_data(data)
-    ct      = aes.encrypt(data)         # ciphertext
-    ct      = iv + ct                   # pack the initialisation vector in
-    
-    # ascii-armouring
+    data = pad_data(data)
+    ivec = generate_nonce()
+    aes = AES.new(key[:__AES_KEYLEN], AES.MODE_CBC, ivec)
+    ctxt = aes.encrypt(data)
+    tag = new_tag(ivec+ctxt, key[__AES_KEYLEN:])
     if armour:
-        ct = '\x41' + base64.encodestring(ct)
+        return '\x41' + (ivec + ctxt + tag).encode('base64')
     else:
-        ct = '\x00' + ct
+        return '\x00' + ivec + ctxt + tag
 
-    return ct
 
-def decrypt(key, data, iv = None):
-    # remove ascii-armouring if present
-    if data[0] == '\x00':
-        data = data[1:]
-    elif data[0] == '\x41':
-        data = base64.decodestring(data[1:])
+def decrypt(ciphertext, key):
+    """
+    Decrypt a ciphertext encrypted with AES in CBC mode; assumes the IV
+    has been prepended to the ciphertext.
+    """
+    if ciphertext[0] == '\x41':
+        ciphertext = ciphertext[1:].decode('base64')
+    else:
+        ciphertext = ciphertext[1:]
+    if len(ciphertext) <= AES.block_size:
+        return None, False
+    tag_start = len(ciphertext) - __TAG_LEN
+    ivec = ciphertext[:AES.block_size]
+    data = ciphertext[AES.block_size:tag_start]
+    if not verify_tag(ciphertext, key[__AES_KEYLEN:]):
+        return None, False
+    aes = AES.new(key[:__AES_KEYLEN], AES.MODE_CBC, ivec)
+    data = aes.decrypt(data)
+    return unpad_data(data), True
 
-    iv      = data[:16]
-    data    = data[16:]
-    aes     = Crypto.Cipher.AES.new(key, mode, iv)
-    data    = aes.decrypt(data)
-    return unpad_data(data)
 
+def new_tag(ciphertext, key):
+    """Compute a new message tag using HMAC-SHA-384."""
+    return HMAC.new(key, msg=ciphertext, digestmod=SHA384).digest()
+
+
+def verify_tag(ciphertext, key):
+    """Verify the tag on a ciphertext."""
+    tag_start = len(ciphertext) - __TAG_LEN
+    data = ciphertext[:tag_start]
+    tag = ciphertext[tag_start:]
+    actual_tag = new_tag(data, key)
+    return streql.equals(actual_tag, tag)
