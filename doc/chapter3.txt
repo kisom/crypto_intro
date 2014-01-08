@@ -1,0 +1,186 @@
+# Public-key Cryptography
+
+The original version of this document had examples of using RSA
+cryptography with Python. However, RSA should be avoided for modern
+secure systems due to concerns with advancements in the discrete
+logarithm problem. While I haven't written Python in a while, I
+have done some research into packages for elliptic curve cryptography
+(ECC). The most promising one so far is
+[PyElliptic](https://pypi.python.org/pypi/pyelliptic/1.1), by [Yann
+GUIBET](https://github.com/yann2192).
+
+Public key cryptography is a type of cryptography that simplifies
+the key exchange problem: there is no need for a secure channel to
+communicate keys over. Instead, each user generates a private key
+with an associated public key. The public key can be given out
+without any security risk. There is still the challenge of distributing
+and verifying public keys, but that is outside the scope of this
+document.
+
+With elliptic curves, we have two types of operations that we
+generally want to accomplish:
+
+* Digital signatures are the public key equivalent of message
+  authentication codes. Alice signs a document using her private
+  key, and users verify the signature against her public key.
+
+* Encryption with elliptic curves is done by performing a key
+  exchange. Alice uses a function called elliptic curve Diffie-Hellman
+  (ECDH) to generate a shared key to encrypt messages to Bob.
+
+There are three curves we generally use with elliptic curve cryptography:
+
+* the NIST P256 curve, which is equivalent to an AES-128 key (also
+  known as secp256r1)
+* the NIST P384 curve, which is equivalent to an AES-192 key (also
+  known as secp384r1)
+* the NIST P521 curve, which is equivalent to an AES-256 key (also
+  known as secp521r1)
+
+Alternatively, there is the Curve25519 curve, which can be used for
+key exchange, and the Ed25519 curve, which can be used for digital
+signatures.
+
+## Generating Keys
+
+Generating new keys with PyElliptic is done with the `ECC`
+class. As we used AES-256 previously, we'll use P521 here.
+
+```python
+import pyelliptic
+
+
+def generate_key():
+    return pyelliptic.ECC(curve='secp521r1')
+```
+
+Public and private keys can be exported (i.e. for storage) using the
+accessors (the examples shown are for Python 2).
+
+```
+>>> key = generate_key()
+>>> priv = key.get_privkey()
+>>> type(priv)
+str
+>>> pub = key.get_pubkey()
+>>> type(pub)
+str
+```
+
+The keys can be imported when instantiating a instance of the `ECC`
+class.
+
+```
+>>> pyelliptic.ECC(privkey=priv)
+<pyelliptic.ecc.ECC instance at 0x39ba2d8>
+>>> pyelliptic.ECC(pubkey=pub)
+<pyelliptic.ecc.ECC instance at 0x39ad9e0>
+```
+
+## Signing Messages
+
+Normally when we do signatures, we compute the hash of the message and
+sign that. PyElliptic does this for us, using SHA-512. Signing
+messages is done with the private key and some message. The algorithm
+used by PyElliptic for signatures is called ECDSA.
+
+```python
+def sign(key, msg):
+    """Sign a message with the ECDSA key."""
+    return key.sign(msg)
+```
+
+In order to verify a message, we need the public key for the signing
+key, the message, and the signature. We'll expect a serialised public
+key and perform the import to a `pyelliptic.ecc.ECC` instance internally.
+
+```python
+def verify(pub, msg, sig):
+    """Verify the signature on a message."""
+    return pyelliptic.ECC(curve='secp521r1', pubkey=pub).verify(sig, msg)
+```
+
+## Encryption
+
+Using elliptic curves, we encrypt using a function that generates a
+symmetric key using a public and private key pair. The function that
+we use, ECDH (elliptic curve Diffie-Hellman), works such that:
+
+```
+ECDH(alice_pub, bob_priv) == ECDH(bob_pub, alice_priv)
+```
+
+That is, ECDH with Alice's private key and Bob's public key returns
+the same shared key as ECDH with Bob's private key and Alice's public
+key.
+
+With `pyelliptic`, the private key used must be an instance of
+`pyelliptic.ecc.ECC`; the public key must be in serialised form.
+
+```
+>>> type(priv)
+<pyelliptic.ecc.ECC instance at 0x39ba2d8>
+>>> type(pub)
+str
+>>> shared_key = priv.get_ecdh_key(pub)
+>>> len(shared_key)
+64
+```
+
+Our shared key is 64 bytes; this is enough for AES-256 and
+HMAC-SHA-256. What about HMAC-SHA-256? We could use a short key, or we
+could expand the last 32 bytes of the key using SHA-384 (which
+produces a 48-byte hash). Here's a function to do that:
+
+```python
+def shared_key(priv, pub):
+    """Generate a new shared encryption key from a keypair."""
+    shared_key = priv.get_ecdh_key(pub)
+    shared_key = shared_key[:32] + SHA384.new(shared_key[32:]).digest()
+    return shared_key
+```
+
+### Ephemeral keys
+
+For improved security, we should use *ephemeral* keys for encryption;
+that is, we generate a new elliptic curve key pair for each encryption
+operation. This works as long as we send the public key with the
+message. Let's look at a sample EC encryption function. For this
+function, we need the public key of our recipient, and we'll pack our
+key into the beginning of the function. This method of encryption is
+called the elliptic curve integrated encryption scheme, or ECIES.
+
+```python
+import secretkey
+import struct
+
+def encrypt(pub, msg):
+    """
+    Encrypt the message to the public key using ECIES. The public key
+    should be a serialised public key.
+    """
+    ephemeral = generate_key()
+    key = shared_key(ephemeral, pub)
+    ephemeral_pub = struct.pack('>H', len(ephemeral.get_public_key()))
+    ephemeral += ephemeral.get_public_key()
+    return ephemeral_pub+secretkey.encrypt(msg, key)
+```
+
+Encryption packs the public key at the beginning, writing first a
+16-bit unsigned integer containing the public key length and then
+appending the ephemeral public key and the ciphertext to
+this. Decryption needs to unpack the ephemeral public key (by reading
+the length and extracting that many bytes from the message) and then
+decrypting the message with the shared key.
+
+```python
+def decrypt(pub, msg):
+    """
+    Decrypt an ECIES-encrypted message with the private key.
+    """
+    ephemeral_len = struct.unpack('>H', msg[:2])
+    ephemeral_pub = msg[2:2+ephemeral_len]
+    key = shared_key(priv, ephemeral_pub)
+    return secretkey.decrypt(msg[2+ephemeral_len:], key)
+```
+    

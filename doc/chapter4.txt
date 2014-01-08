@@ -1,0 +1,64 @@
+# Key Exchange
+
+So how does Bob know the key actually belongs to Alice? There are two
+main schools of thought regarding the authentication of key ownership:
+centralised and decentralised. TLS/SSL follow the centralised school:
+a root certificate[^rootcert] authority (CA) signs intermediary CA
+keys, which then sign user keys. For example, if Bob runs Foo Widgets,
+LLC, he can generate an SSL keypair. From this, he generates a
+certificate signing request, and sends this to the CA. The CA, usually
+after taking some money and ostensibly actually verifying Bob's
+identity[^caverify], then signs Bob's certificate. Bob sets up his
+webserver to use his SSL certificate for all secure traffic, and Alice
+sees that the CA did in fact sign his certificate. This relies on
+trusted central authorities, like VeriSign[^verisign] Alice's web
+browser would ship with a keystore of select trusted CA public keys
+(like VeriSigns) that she could use to verify signatures on the
+certificates from various sites. This system is called a public key
+infrastructure. The other school of thought is followed by PGP[^pgp] -
+the decentralised model.
+
+In PGP, this is manifested as the Web of Trust[^wot]. For example, if
+Carol now wants to talk to Bob and gives Bob her public key, Bob can
+check to see if Carol's key has been signed by anyone else. We'll also
+say that Bob knows for a fact that Alice's key belongs to Alice, and
+he trusts her[^trust], and that Alice has signed Carol's key. Bob sees
+Alice's signature on Carol's key and then can be reasonably sure that
+Carol is who she says it was. If we repeat the process with Dave,
+whose key was signed by Carol (whose key was signed by Alice), Bob
+might be able to be more certain that the key belongs to Dave, but
+maybe he doesn't really trust Carol to properly verify identities. Bob
+can mark keys as having various trust levels, and from this a web of
+trust emerges: a picture of how well you can trust that a given key
+belongs to a given user.
+
+The key distribution problem is not a quick and easy problem to
+solve; a lot of very smart people have spent a lot of time coming
+up with solutions to the problem. There are key exchange protocols
+(such as the Diffie-Hellman key exchange[^dh] and IKE[^ike] (which
+uses Diffie-Hellman) that provide alternatives to the web of trust
+and public key infrastructures.
+
+[^rootcert]: A certificate is a public key encoded with X.509 and
+    which can have additional informational attributes attached, such as
+    organisation name and country.
+
+[^caverify]: The extent to which this actually happens varies widely based on the different CAs.
+
+[^verisign]: There is some question as to whether VeriSign can
+    actually be trusted, but that is another discussion for another
+    day...
+
+[^pgp]: and GnuPG
+
+[^wot]: http://www.rubin.ch/pgp/weboftrust.en.html
+
+[^trust]: It is quite often important to distinguish between *I know
+    this key belongs to that user* and *I trust that user*. This is
+    especially important with key signatures - if Bob cannot trust
+    Alice to properly check identities, she might sign a key for an
+    identity she hasn't checked.
+
+[^dh]: http://is.gd/Tr0zLP
+
+[^ike]: https://secure.wikimedia.org/wikipedia/en/wiki/Internet\_Key\_Exchange

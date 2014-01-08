@@ -4,9 +4,8 @@ Introduction to Cryptography with PyCrypto
 author: kyle isom <coder@kyleisom.net>
 
 Read online:
-* [PDF](https://github.com/kisom/crypto_intro/blob/master/doc/pycrypto.pdf)
 * [Github page](http://kisom.github.com/crypto_intro)
-* [Blog page (octpress)](http://www.kyleisom.net/blog/2011/06/17/intro-to-crypto/)
+* [Leanpub](https://leanpub.com/pycrypto/read)
 
 This is the repository for an intro to crypto using PyCrypto. It is aimed
 at introducing basic cryptography topics to programmers who are 
@@ -23,15 +22,8 @@ illustrate clearly how to use the software.
 
 Included source files (in src/):
 
-    block.py:           block cipher example code
-    block_crypt.py:     example code for using the block cipher examples
-    block_tests.py:     tests for the block cipher code
-
-    publickey.py:       public key cryptography example code
-    publickey_crypt.py: example code using the public key example code
-    publickey_tests.py: tests for the public key code
-
-    tests.txt:          example validated test code output
+	secretkey.py	secret key cryptographic functions
+	publickey.py	public key cryptographic functions
 
 Contributors:     
 * [zenmower](https://github.com/clarke187) provided grammar, spelling, and 
